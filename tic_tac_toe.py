@@ -14,15 +14,15 @@ class TicTacToeEngine:
         self.nodes_explored = 0
 
     def is_empty(self, row, col):
-        #Retorna si una celda está disponible.
+        #Retorna si una celda está disponible
         return self.board[row][col] == ' '
 
     def get_moves(self):
-        #Retorna lista de coordenadas (r, c) disponibles.
+        #Retorna lista de coordenadas (r, c) disponibles
         return [(r, c) for r in range(self.size) for c in range(self.size) if self.board[r][c] == ' ']
 
     def is_winner(self, player):
-        #Verifica si el jugador ha ganado."""
+        #Verifica si el jugador ha ganado
         for i in range(self.size):
             if all([self.board[i][j] == player for j in range(self.size)]): return True
             if all([self.board[j][i] == player for j in range(self.size)]): return True
@@ -31,7 +31,7 @@ class TicTacToeEngine:
         return False
 
     def is_terminal(self):
-        #Verifica si el juego terminó (victoria o empate)."""
+        #Verifica si el juego terminó (victoria o empate)
         return self.is_winner('X') or self.is_winner('O') or len(self.get_moves()) == 0
 
     def evaluate(self):
@@ -218,7 +218,7 @@ class TicTacToeEngine:
             return child, board, next_player
 
         def simulate(board, current_player):
-            #Simulación aleatoria (rollout) hasta el final del juego.
+            #Simulación aleatoria (rollout) hasta el final del juego
             board = [row[:] for row in board]
             p = current_player
             while not is_terminal_board(board):
@@ -262,6 +262,12 @@ class TicTacToeEngine:
         #Lanza el algoritmo seleccionado y devuelve la mejor jugada.
         self.nodes_explored = 0
 
+        # Protección: minimax_pure en 4x4 agota la memoria; se fuerza minimax_limit
+        if algo == 'minimax_pure' and self.size > 3:
+            print("[ADVERTENCIA] minimax_pure no es seguro en tableros > 3x3. Se usará minimax_limit con depth=4.")
+            algo = 'minimax_limit'
+            depth = 4
+
         if algo == 'mcts':
             return self.mcts(N, C, player)
 
@@ -286,7 +292,7 @@ class TicTacToeEngine:
                 best_move = (r, c)
 
         return best_move
-    
+
 
 class GameLoop:
     
@@ -371,7 +377,7 @@ class GameLoop:
             print("\n¡Es un empate!")
 
 
-#Bloque de ejecución para pruebas rápidas. Se puede modificar para probar diferentes configuraciones o modos.
+#Bloque de ejecución principal para iniciar el juego. Se pueden modificar los parámetros para probar diferentes configuraciones.
 if __name__ == "__main__":
     configs = {
         'IA1': {'algo': 'alpha_beta', 'depth': 4, 'N': 500, 'C': math.sqrt(2)}
