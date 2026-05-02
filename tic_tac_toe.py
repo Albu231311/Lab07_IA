@@ -286,3 +286,95 @@ class TicTacToeEngine:
                 best_move = (r, c)
 
         return best_move
+    
+
+class GameLoop:
+    
+    #Clase que orquesta el flujo de la partida.
+    
+    def __init__(self, size=3, mode="H-IA", starting_player="H", ia_configs=None):
+        self.engine = TicTacToeEngine(size)
+        self.mode = mode
+        self.current_player = 'X'
+
+        if ia_configs is None:
+            self.ia_configs = {
+                'IA1': {'algo': 'alpha_beta', 'depth': 4, 'N': 500, 'C': math.sqrt(2)},
+                'IA2': {'algo': 'mcts',        'depth': 4, 'N': 500, 'C': math.sqrt(2)}
+            }
+        else:
+            self.ia_configs = ia_configs
+
+        if mode == "H-IA":
+            self.roles = {'X': 'Humano', 'O': 'IA1'} if starting_player == 'H' else {'X': 'IA1', 'O': 'Humano'}
+        elif mode == "IA-IA":
+            self.roles = {'X': 'IA1', 'O': 'IA2'}
+        else:
+            self.roles = {'X': 'Humano 1', 'O': 'Humano 2'}
+
+    def print_board(self):
+        #Imprime el tablero tras cada movimiento
+        for row in self.engine.board:
+            print(" | ".join(row))
+            print("-" * (self.engine.size * 4 - 1))
+
+    def play(self):
+        print(f"Iniciando partida {self.engine.size}x{self.engine.size} | Modo: {self.mode}")
+        self.print_board()
+
+        while not self.engine.is_terminal():
+            role = self.roles[self.current_player]
+            print(f"\nTurno de {role} ({self.current_player})")
+
+            start_time = time.time()
+            nodes = 0
+
+            if "Humano" in role:
+                valid_move = False
+                while not valid_move:
+                    try:
+                        move = input("Ingresa fila y columna separadas por espacio (ej. '0 1'): ")
+                        r, c = map(int, move.split())
+                        if 0 <= r < self.engine.size and 0 <= c < self.engine.size and self.engine.is_empty(r, c):
+                            self.engine.board[r][c] = self.current_player
+                            valid_move = True
+                        else:
+                            print("Casilla ocupada o fuera de rango. Intenta de nuevo.")
+                    except (ValueError, IndexError):
+                        print("Entrada inválida. Asegúrate de ingresar coordenadas dentro del tablero.")
+            else:
+                config = self.ia_configs[role]
+                algo  = config['algo']
+                depth = config.get('depth', 4)
+                N     = config.get('N', 500)
+                C     = config.get('C', math.sqrt(2))
+
+                move = self.engine.get_best_move(algo, depth, self.current_player, N, C)
+
+                if move:
+                    self.engine.board[move[0]][move[1]] = self.current_player
+                nodes = self.engine.nodes_explored
+
+            elapsed_time = time.time() - start_time
+
+            self.print_board()
+            if "IA" in role:
+                print(f"[{role}] Nodos explorados: {nodes} | Tiempo: {elapsed_time:.4f}s")
+
+            self.current_player = 'O' if self.current_player == 'X' else 'X'
+
+        if self.engine.is_winner('X'):
+            print(f"\n¡Ha ganado {self.roles['X']} (X)!")
+        elif self.engine.is_winner('O'):
+            print(f"\n¡Ha ganado {self.roles['O']} (O)!")
+        else:
+            print("\n¡Es un empate!")
+
+
+#Bloque de ejecución para pruebas rápidas. Se puede modificar para probar diferentes configuraciones o modos.
+if __name__ == "__main__":
+    configs = {
+        'IA1': {'algo': 'alpha_beta', 'depth': 4, 'N': 500, 'C': math.sqrt(2)}
+    }
+    game = GameLoop(size=3, mode="H-IA", starting_player="IA", ia_configs=configs)
+    game.play()
